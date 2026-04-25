@@ -1,0 +1,275 @@
+/* ============================================
+   DESIGN TOKENS & CSS VARIABLES
+   ============================================ */
+:root{--bg:#0a0c10;--surface:#10141c;--surface2:#161b26;--surface3:#1c2232;--border:#1e2535;--border2:#263040;--text:#e8edf5;--muted:#5a6580;--muted2:#3d4d66;--cyan:#00d4ff;--cyan-dim:rgba(0,212,255,0.12);--amber:#ffb340;--amber-dim:rgba(255,179,64,0.12);--red:#ff4757;--red-dim:rgba(255,71,87,0.12);--green:#2ed573;--green-dim:rgba(46,213,115,0.12);--sidebar-w:220px;--sidebar-collapsed:68px;--topbar-h:60px;--font:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;--radius:14px;--radius-sm:10px;--trans:0.22s cubic-bezier(0.4,0,0.2,1)}
+
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(0,212,255,0.013) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.013) 1px,transparent 1px);background-size:44px 44px}
+/* ============================================
+   APP LAYOUT: Main flex container
+   ============================================ */
+.app{display:flex;min-height:100vh;position:relative;z-index:1}
+
+/* ============================================
+   SIDEBAR: Navigation panel with collapse
+   ============================================ */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:14px 10px;gap:4px;position:fixed;top:0;left:0;bottom:0;z-index:200;transition:width var(--trans);overflow:hidden}
+.sidebar.collapsed{width:var(--sidebar-collapsed)}
+
+/* Sidebar header: Logo and branding */
+.sidebar-header{display:flex;align-items:center;gap:10px;padding:6px 4px 14px;border-bottom:1px solid var(--border);margin-bottom:6px}
+.sidebar-logo{width:36px;height:36px;background:var(--cyan);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 18px rgba(0,212,255,0.35)}
+.sidebar-logo svg{width:18px;height:18px}
+
+/* Brand text - hidden when sidebar is collapsed */
+.sidebar-brand{white-space:nowrap;overflow:hidden}
+.sidebar-brand-name{font-size:15px;font-weight:800;letter-spacing:-0.3px}
+.sidebar-brand-name span{color:var(--cyan)}
+.sidebar-brand-sub{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.8px}
+/* section labels in sidebar */
+.nav-section-label{font-family:var(--mono);font-size:9px;letter-spacing:1.2px;color:var(--muted2);padding:10px 8px 4px;text-transform:uppercase;white-space:nowrap;overflow:hidden;transition:opacity var(--trans)}
+.sidebar.collapsed .nav-section-label{opacity:0;height:0;padding:0;margin:0}
+
+/* ============================================
+   NAVIGATION ITEMS
+   ============================================ */
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:all var(--trans);border:1px solid transparent;color:var(--muted);white-space:nowrap;position:relative}
+.nav-item:hover{background:var(--surface2);color:var(--text);border-color:var(--border)}
+.nav-item.active{background:var(--cyan-dim);color:var(--cyan);border-color:rgba(0,212,255,0.28)}
+.nav-item svg{width:18px;height:18px;flex-shrink:0}
+.nav-label{font-size:13px;font-weight:600;overflow:hidden;transition:opacity var(--trans),max-width var(--trans);max-width:150px}
+.sidebar.collapsed .nav-label{opacity:0;max-width:0}
+.nav-badge{position:absolute;top:7px;right:7px;width:7px;height:7px;background:var(--red);border-radius:50%;border:2px solid var(--surface);animation:badgePulse 2s ease infinite}
+
+/* ============================================
+   SIDEBAR BOTTOM: Connection indicator
+   ============================================ */
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--border);padding-top:12px;display:flex;flex-direction:column;gap:4px}
+.conn-indicator{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);background:var(--green-dim);border:1px solid rgba(46,213,115,0.2);overflow:hidden}
+.conn-indicator.disconnected{background:var(--red-dim);border-color:rgba(255,71,87,0.2)}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);animation:breathe 2.5s ease infinite;flex-shrink:0}
+.conn-indicator.disconnected .conn-dot{background:var(--red);box-shadow:0 0 7px var(--red);animation:none}
+.conn-label{font-family:var(--mono);font-size:10px;color:var(--green);white-space:nowrap;transition:opacity var(--trans);font-weight:600}
+.conn-indicator.disconnected .conn-label{color:var(--red)}
+
+/* Hide label and center dot when sidebar is collapsed */
+.sidebar.collapsed .conn-indicator{justify-content:center;padding:8px}
+.sidebar.collapsed .conn-label{display:none}
+/* ============================================
+   MAIN CONTENT AREA
+   ============================================ */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;transition:margin-left var(--trans)}
+.sidebar.collapsed~.main{margin-left:var(--sidebar-collapsed)}
+
+/* ============================================
+   TOP BAR
+   ============================================ */
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:100}
+.page-title{font-size:17px;font-weight:800;letter-spacing:-0.4px}
+.page-title span{color:var(--cyan)}
+.page-sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:1px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.chip{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid var(--border2);font-family:var(--mono);font-size:10px;color:var(--muted)}
+.chip .dot{width:5px;height:5px;border-radius:50%}
+.chip.online-chip .dot{background:var(--green);box-shadow:0 0 5px var(--green)}
+.chip.offline-chip .dot{background:var(--red);box-shadow:0 0 5px var(--red)}
+.clock{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text)}
+
+/* ============================================
+   CONTENT & PAGES
+   ============================================ */
+.content{padding:22px 24px;flex:1}
+.page{display:none;animation:fadeUp 0.2s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* ============================================
+   LAYOUT: Grid and column layouts
+   ============================================ */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.col-gap{display:flex;flex-direction:column;gap:16px}
+
+/* ============================================
+   CARDS: Content containers
+   ============================================ */
+.card,.bt-status-card,.tm-input{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+.card{padding:18px;transition:border-color var(--trans)}
+.card:hover{border-color:var(--border2)}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:700;letter-spacing:0.9px;text-transform:uppercase;color:var(--muted)}
+.card-action{font-family:var(--mono);font-size:10px;color:var(--cyan);border:1px solid rgba(0,212,255,0.2);background:none;padding:4px 9px;border-radius:6px;cursor:pointer;transition:all var(--trans)}
+.card-action:hover{background:var(--cyan-dim)}
+/* ============================================
+   STAT CARDS: Dashboard statistics
+   ============================================ */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden}
+.stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:7px}
+.stat-value{font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1}
+.sc .stat-value{color:var(--cyan)}
+.sa .stat-value{color:var(--amber)}
+.sr .stat-value{color:var(--red)}
+.stat-sub{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px}
+
+/* ============================================
+   ALERT LIST: Live alerts display
+   ============================================ */
+.alert-list{display:flex;flex-direction:column;gap:7px;max-height:340px;overflow-y:auto;padding-right:2px}
+.alert-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:border-color var(--trans)}
+.a-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.a-icon.crit{background:var(--red-dim)}
+.a-icon.warn{background:var(--amber-dim)}
+.a-icon.info{background:var(--cyan-dim)}
+.a-body{flex:1;min-width:0}
+.a-title{font-size:12px;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a-meta{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.a-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 7px;border-radius:4px;letter-spacing:0.4px;text-transform:uppercase;flex-shrink:0}
+.badge-h{background:var(--red-dim);color:var(--red)}
+.badge-m{background:var(--amber-dim);color:var(--amber)}
+.badge-l{background:var(--cyan-dim);color:var(--cyan)}
+/* ============================================
+   LED MATRIX & CHARTS
+   ============================================ */
+.led-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.led-cell{aspect-ratio:1;border-radius:12px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;color:var(--muted)}
+.led-cell.on{background:var(--cyan-dim);color:var(--cyan);border-color:rgba(0,212,255,0.3);box-shadow:0 0 16px rgba(0,212,255,0.15)}
+.mini-chart{height:44px;display:flex;align-items:flex-end;gap:3px}
+.bar{flex:1;border-radius:2px 2px 0 0;background:var(--cyan-dim);border:1px solid rgba(0,212,255,0.18)}
+.bar.hi{background:var(--cyan);border-color:var(--cyan)}
+
+/* ============================================
+   BLUETOOTH UI: Connection and device management
+   ============================================ */
+.bt-status-card{padding:24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:16px;position:relative;overflow:hidden}
+.bt-status-card::before{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,255,0.05) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.bt-icon-wrap{width:80px;height:80px;border-radius:50%;border:2px solid rgba(0,212,255,0.25);display:flex;align-items:center;justify-content:center;position:relative;background:var(--cyan-dim)}
+.bt-icon-wrap.disconnected-icon{border-color:rgba(255,71,87,0.25);background:var(--red-dim)}
+.bt-icon-wrap.connected-icon{border-color:rgba(46,213,115,0.25);background:var(--green-dim)}
+.bt-state-title{font-size:20px;font-weight:800;letter-spacing:-0.5px}
+.bt-state-sub{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.bt-device-list{display:flex;flex-direction:column;gap:8px;width:100%;text-align:left}
+.bt-device-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer}
+.bt-dev-icon{width:36px;height:36px;border-radius:9px;background:var(--cyan-dim);border:1px solid rgba(0,212,255,0.2);display:flex;align-items:center;justify-content:center;font-size:16px}
+.bt-dev-name{font-size:13px;font-weight:700}
+.bt-dev-sub,.kv,.set-desc,.tm-pct,.tm-cls-name,.log-line,.modal-body,.field label{font-family:var(--mono)}
+.bt-dev-sub,.set-desc,.tm-pct,.log-line,.modal-body{font-size:10px;color:var(--muted)}
+.bt-signal{display:flex;gap:2px;align-items:flex-end;margin-left:auto}
+.bt-signal span{width:4px;border-radius:1px;background:var(--border2)}
+.bt-signal span:nth-child(1){height:6px}
+.bt-signal span:nth-child(2){height:10px}
+.bt-signal span:nth-child(3){height:14px}
+.bt-device-item.paired .bt-signal span{background:var(--cyan)}
+.bt-log{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-family:var(--mono);font-size:11px;height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
+.bt-log::-webkit-scrollbar{width:3px}
+.bt-log::-webkit-scrollbar-thumb{background:var(--border2)}
+.log-line.ok{color:var(--green)}
+.log-line.err{color:var(--red)}
+.log-line.info{color:var(--cyan)}
+.log-time{color:var(--muted2);margin-right:8px}
+.bt-cmd-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cmd-btn{padding:10px 8px;border-radius:10px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text);transition:all var(--trans);display:flex;flex-direction:column;align-items:center;gap:5px}
+.cmd-btn:hover{border-color:var(--border2);background:var(--surface3)}
+.cmd-btn .ci{font-size:18px}
+
+/* ============================================
+   FORM INPUTS & FIELDS
+   ============================================ */
+.tm-input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color var(--trans)}
+.tm-input:focus{border-color:rgba(0,212,255,0.4)}
+
+/* ============================================
+   SETTINGS: Preferences and toggles
+   ============================================ */
+.set-title{font-size:11px;font-weight:700;letter-spacing:0.9px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid var(--border)}
+.set-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.set-row:last-child{border-bottom:none}
+.set-icon{width:34px;height:34px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.set-info{flex:1}
+.set-name{font-size:13px;font-weight:600;margin-bottom:1px}
+.toggle{width:38px;height:21px;background:var(--border2);border-radius:11px;position:relative;transition:background var(--trans);flex-shrink:0;align-self:flex-start;cursor:pointer}
+.toggle.on{background:var(--cyan)}
+.toggle::after{content:'';position:absolute;width:15px;height:15px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform var(--trans);box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+.toggle.on::after{transform:translateX(17px)}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.btn{padding:9px 18px;border-radius:10px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all var(--trans);display:inline-flex;align-items:center;gap:6px}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-primary{background:var(--cyan);color:#000}
+.btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,71,87,0.25)}
+.btn-sm{padding:6px 12px;font-size:11px}
+
+/* ============================================
+   MODALS: Alert and detail windows
+   ============================================ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(10px);z-index:400;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:26px;width:400px;max-width:calc(100vw - 32px)}
+.modal-hd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.modal-icon{font-size:26px}
+.modal-title{font-size:17px;font-weight:800}
+.modal-sub{font-size:11px;color:var(--muted)}
+.modal-ft{display:flex;gap:8px;justify-content:flex-end}
+
+/* ============================================
+   UTILITIES & SPECIAL EFFECTS
+   ============================================ */
+.flash-overlay{position:fixed;inset:0;pointer-events:none;z-index:500;opacity:0}
+.flash-overlay.go{animation:flashGo 0.65s ease}
+@keyframes flashGo{0%{opacity:0}20%{opacity:0.18}42%{opacity:0}62%{opacity:0.1}100%{opacity:0}}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px;gap:7px;color:var(--muted);text-align:center}
+.empty .ei{font-size:28px;opacity:0.35}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.7px}
+.kv{display:flex;justify-content:space-between;padding:6px 0;color:var(--muted);font-size:11px;border-bottom:1px solid var(--border)}
+.kv:last-child{border-bottom:none}
+.micro-grid{grid-template-columns:repeat(4,1fr)}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ============================================
+   RESPONSIVE DESIGN: Mobile and tablet
+   ============================================ */
+@media(max-width:860px){.g2,.stat-row{grid-template-columns:1fr}.bt-cmd-grid{grid-template-columns:repeat(2,1fr)}.micro-grid{grid-template-columns:repeat(4,1fr)}}
+
+/* ============================================
+   GMAIL INTEGRATION STYLES
+   ============================================ */
+#gmailFeed {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.gmail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.gmail-subject {
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.gmail-snippet {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.gmail-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--cyan);
+}
