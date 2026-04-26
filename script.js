@@ -620,6 +620,12 @@ async function fetchGmail() {
   }
 }
 
+function clearGmailFeed() {
+  const feed = document.getElementById('gmailFeed');
+  if (!feed) return;
+  feed.innerHTML = `<div class="empty"><div class="ei">📭</div><p>Gmail feed cleared</p></div>`;
+}
+
 let messages = [];
 let lastMessageId = null;
 let isLiveSyncActive = false;
