@@ -87,7 +87,7 @@ function renderAlerts() {
     return;
   }
   el.innerHTML = alerts.map(a => `
-    <div class="alert-item ${a.unread ? 'unread' : ''}" onclick="modalOpen(${a.id})">
+    <div class="alert-item ${a.unread ? 'unread' : ''}" onclick='modalOpen(${JSON.stringify(a.id)})'>
       <div class="a-icon ${a.lvl}">${a.icon}</div>
       <div class="a-body">
         <div class="a-title">${a.title}</div>
@@ -96,6 +96,7 @@ function renderAlerts() {
       <div class="a-badge ${a.urgency === 'h' ? 'badge-h' : a.urgency === 'm' ? 'badge-m' : 'badge-l'}">
         ${a.urgency === 'h' ? 'HIGH' : a.urgency === 'm' ? 'MED' : 'LOW'}
       </div>
+      <button class="ack-btn" onclick="ackAlert(${JSON.stringify(a.id)}); event.stopPropagation()">Acknowledge</button>
     </div>
   `).join('');
   updateCounts();
@@ -168,6 +169,12 @@ function modalAck() {
   currentAlertId = null;
   currentGmailId = null;
   document.getElementById('alertModal').classList.remove('open');
+}
+
+function ackAlert(id) {
+  if (id == null) return;
+  alerts = alerts.map(a => a.id === id ? { ...a, unread: false } : a);
+  renderAlerts();
 }
 
 /* ============================================
