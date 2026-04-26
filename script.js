@@ -5,8 +5,9 @@ let sidebarCollapsed = false;
 let btDevice = null, btTx = null, btNotifyChar = null, btConnected = false;
 let uartBuffer = '';
 let currentAlertId = null;
+let currentGmailId = null;
 let alertCount = 0;
-let gmailUnreadCount = 0;
+let eventHistory = [];
 let gmailKnownMessageIds = new Set();
 let gmailBaselineCaptured = false;
 let gmailMessages = [];
@@ -105,7 +106,7 @@ function updateCounts() {
   const unread = document.getElementById('unreadAlerts');
   const crit = document.getElementById('critAlerts');
   const badge = document.getElementById('navBadge');
-  const unreadCount = alerts.filter(a => a.unread).length + gmailUnreadCount;
+  const unreadCount = alerts.filter(a => a.unread).length;
   if (total) total.textContent = alertCount;
   if (unread) unread.textContent = unreadCount;
   if (crit) crit.textContent = btConnected ? 1 : 0;
@@ -119,10 +120,20 @@ function clearAlerts() {
 }
 
 // Add a new alert to the top of the list
+function recordEvent() {
+  const now = Date.now();
+  eventHistory.push(now);
+  const hourAgo = now - 3600000;
+  eventHistory = eventHistory.filter(ts => ts >= hourAgo);
+}
+
 function addAlert(a) {
   alertCount += 1;
-  alerts.unshift({ id: Date.now(), ...a, time: nowTime() });
+  const alert = { id: a.id || Date.now(), time: nowTime(), ...a };
+  alerts.unshift(alert);
+  recordEvent();
   renderAlerts();
+  buildChart();
 }
 
 /* ============================================
@@ -150,7 +161,12 @@ function modalAck() {
   if (currentAlertId) {
     alerts = alerts.map(a => a.id === currentAlertId ? { ...a, unread: false } : a);
     renderAlerts();
+  } else if (currentGmailId) {
+    alerts = alerts.map(a => a.id === currentGmailId ? { ...a, unread: false } : a);
+    renderAlerts();
   }
+  currentAlertId = null;
+  currentGmailId = null;
   document.getElementById('alertModal').classList.remove('open');
 }
 
@@ -254,6 +270,15 @@ function renderAvailableDevice(dev) {
 
 // Scan for available Bluetooth devices
 async function btScan() {
+  addAlert({
+    icon: '📡',
+    lvl: 'info',
+    title: 'Bluetooth scan started',
+    src: 'Bluetooth',
+    urgency: 'l',
+    unread: false,
+    body: 'Scanning for nearby micro:bit devices.'
+  });
   btLog('Scanning for Bluetooth devices…', 'info');
   document.getElementById('btStateTitle').textContent = 'Scanning…';
   document.getElementById('btStateSub').textContent = 'Looking for nearby micro:bit devices';
@@ -298,6 +323,15 @@ async function btScan() {
         return;
       } catch (innerError) {
         btLog(`Scan failed: ${innerError.message}`, 'err');
+        addAlert({
+          icon: '❌',
+          lvl: 'crit',
+          title: 'Bluetooth scan failed',
+          src: 'Bluetooth',
+          urgency: 'h',
+          unread: false,
+          body: 'Scanning failed: ' + innerError.message
+        });
         document.getElementById('btStateTitle').textContent = 'Scan failed';
         document.getElementById('btStateSub').textContent = 'Please try again';
         renderDeviceEmptyState('Scan failed');
@@ -333,6 +367,15 @@ async function btConnectDevice(dev) {
     btConnected = true;
     setConnectedUI(dev.name || 'micro:bit');
     btLog(`Connected to ${dev.name || 'device'}`, 'ok');
+    addAlert({
+      icon: '✅',
+      lvl: 'info',
+      title: 'Bluetooth connected',
+      src: 'Bluetooth',
+      urgency: 'l',
+      unread: false,
+      body: `Connected to ${dev.name || 'micro:bit'}.`
+    });
 
     dev.addEventListener('gattserverdisconnected', () => {
       btConnected = false;
@@ -345,10 +388,28 @@ async function btConnectDevice(dev) {
       uartBuffer = '';
       setDisconnectedUI();
       btLog('Device disconnected.', 'err');
+      addAlert({
+        icon: '⚠️',
+        lvl: 'warn',
+        title: 'Bluetooth disconnected',
+        src: 'Bluetooth',
+        urgency: 'm',
+        unread: false,
+        body: 'The micro:bit was disconnected.'
+      });
       renderDeviceEmptyState('No device connected');
     });
   } catch (e) {
     btLog(`Connection failed: ${e.message}`, 'err');
+    addAlert({
+      icon: '❌',
+      lvl: 'crit',
+      title: 'Bluetooth connection failed',
+      src: 'Bluetooth',
+      urgency: 'h',
+      unread: false,
+      body: e.message
+    });
     setDisconnectedUI();
   }
 }
@@ -485,10 +546,23 @@ function resetSettings() {
 function buildChart() {
   const el = document.getElementById('miniChart');
   if (!el) return;
-  const data = [1, 3, 2, 5, 4, 3, 7, 2];
-  const max = Math.max(...data);
-  el.innerHTML = data.map((v, i) =>
-    `<div class="bar ${i === 6 ? 'hi' : ''}" style="height:${Math.round(v / max * 100)}%"></div>`
+  const now = Date.now();
+  const hourAgo = now - 3600000;
+  const bucketSize = 3600000 / 8;
+  const buckets = Array.from({ length: 8 }, () => 0);
+
+  eventHistory.forEach(ts => {
+    if (ts >= hourAgo) {
+      let index = Math.floor((ts - hourAgo) / bucketSize);
+      if (index < 0) index = 0;
+      if (index > 7) index = 7;
+      buckets[index] += 1;
+    }
+  });
+
+  const max = Math.max(...buckets, 1);
+  el.innerHTML = buckets.map((count, i) =>
+    `<div class="bar ${count > 0 ? 'hi' : ''}" style="height:${Math.round(count / max * 100)}%"></div>`
   ).join('');
 }
 
@@ -505,6 +579,7 @@ buildChart();
 renderAlerts();
 setDisconnectedUI();
 renderDeviceEmptyState('No device found');
+setInterval(buildChart, 60000);
 
 // Initialize dashboard page title
 switchPage('dashboard');
@@ -567,7 +642,6 @@ function startPolling() {
 document.getElementById("googleSignOutBtn").onclick = () => {
   gmailToken = null;
   gmailEmail = null;
-  gmailUnreadCount = 0;
   gmailKnownMessageIds.clear();
   gmailBaselineCaptured = false;
 
@@ -601,19 +675,14 @@ async function fetchGmail() {
     if (!gmailBaselineCaptured) {
       messages.forEach(msg => gmailKnownMessageIds.add(msg.id));
       gmailBaselineCaptured = true;
-      gmailUnreadCount = 0;
     } else {
-      let newMessages = 0;
       messages.forEach(msg => {
         if (!gmailKnownMessageIds.has(msg.id)) {
           gmailKnownMessageIds.add(msg.id);
           newlyAddedIds.add(msg.id);
-          newMessages += 1;
         }
       });
-      gmailUnreadCount += newMessages;
     }
-    updateCounts();
 
     if (messages.length === 0) {
       document.getElementById('gmailFeed').innerHTML = `<div class="empty"><div class="ei">📭</div><p>No unread emails</p></div>`;
@@ -642,7 +711,20 @@ async function fetchGmail() {
       const safeFrom = escapeHtml(from);
       const isNewAfterSignIn = newlyAddedIds.has(msg.id);
       if (isNewAfterSignIn) {
-        sendCmd('EMAIL:LOW');
+        if (btConnected) {
+          sendCmd('EMAIL:LOW');
+        } else {
+          addAlert({
+            id: msg.id,
+            icon: '✉️',
+            lvl: 'warn',
+            title: 'Email received',
+            src: 'Gmail',
+            urgency: 'l',
+            unread: true,
+            body: `New email from ${from}. Waiting for micro:bit connection.`
+          });
+        }
       }
       return {
         id: msg.id,
@@ -651,7 +733,7 @@ async function fetchGmail() {
         sentAt,
         content,
         alertLevel: 'LOW',
-        sentToMicrobit: isNewAfterSignIn,
+        sentToMicrobit: isNewAfterSignIn && btConnected,
         displayHtml: `
           <div class="gmail-item" onclick="openGmailMessage('${escapedId}')">
             <div class="gmail-subject">${safeSubject}</div>
@@ -678,7 +760,9 @@ function clearGmailFeed() {
 function openGmailMessage(id) {
   const message = gmailMessages.find(m => m.id === id);
   if (!message) return;
-  currentAlertId = null;
+  currentGmailId = id;
+  const relatedAlert = alerts.find(a => a.id === id);
+  currentAlertId = relatedAlert ? relatedAlert.id : null;
   document.getElementById('mIcon').textContent = '✉️';
   document.getElementById('mTitle').textContent = message.subject;
   document.getElementById('mSub').textContent = `${message.from} · ${message.sentAt}`;
