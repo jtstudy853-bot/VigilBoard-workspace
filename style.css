@@ -44,7 +44,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .nav-item svg{width:18px;height:18px;flex-shrink:0}
 .nav-label{font-size:13px;font-weight:600;overflow:hidden;transition:opacity var(--trans),max-width var(--trans);max-width:150px}
 .sidebar.collapsed .nav-label{opacity:0;max-width:0}
-.sidebar.collapsed .nav-item{justify-content:center;padding-left:0;padding-right:0}
+.sidebar.collapsed .nav-item{justify-content:center;padding-left:0;padding-right:0;width:100%}
 .sidebar.collapsed .nav-item.active{justify-content:center}
 .nav-badge{position:absolute;top:7px;right:7px;width:7px;height:7px;background:var(--red);border-radius:50%;border:2px solid var(--surface);animation:badgePulse 2s ease infinite}
 
@@ -121,7 +121,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
    ALERT LIST: Live alerts display
    ============================================ */
 .alert-list{display:flex;flex-direction:column;gap:7px;max-height:340px;overflow-y:auto;padding-right:2px}
-.alert-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:border-color var(--trans)}
+.alert-item{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:border-color var(--trans),background var(--trans)}
+.alert-item.unread{background:rgba(255,71,87,0.05);border-color:rgba(255,71,87,0.28);padding-left:24px}
+.alert-item.unread::before{content:'';position:absolute;width:10px;height:10px;border-radius:50%;background:var(--red);left:10px;top:50%;transform:translateY(-50%)}
+.alert-item.unread .a-body{margin-left:0}
 .a-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
 .a-icon.crit{background:var(--red-dim)}
 .a-icon.warn{background:var(--amber-dim)}
