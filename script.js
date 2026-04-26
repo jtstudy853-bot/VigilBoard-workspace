@@ -9,6 +9,7 @@ let alertCount = 0;
 let gmailUnreadCount = 0;
 let gmailKnownMessageIds = new Set();
 let gmailBaselineCaptured = false;
+let gmailMessages = [];
 
 const NUS_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const NUS_RX_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
@@ -595,6 +596,7 @@ async function fetchGmail() {
     );
     const data = await res.json();
     const messages = data.messages || [];
+    const newlyAddedIds = new Set();
 
     if (!gmailBaselineCaptured) {
       messages.forEach(msg => gmailKnownMessageIds.add(msg.id));
@@ -605,6 +607,7 @@ async function fetchGmail() {
       messages.forEach(msg => {
         if (!gmailKnownMessageIds.has(msg.id)) {
           gmailKnownMessageIds.add(msg.id);
+          newlyAddedIds.add(msg.id);
           newMessages += 1;
         }
       });
@@ -626,18 +629,39 @@ async function fetchGmail() {
       )
     );
     
-    const html = emailsList.map(msg => {
+    gmailMessages = emailsList.map(msg => {
       const headers = msg.payload.headers || [];
       const subject = headers.find(h => h.name === 'Subject')?.value || '(No subject)';
       const from = headers.find(h => h.name === 'From')?.value || 'Unknown';
-      return `
-        <div class="gmail-item">
-          <div class="gmail-subject">${subject}</div>
-          <div class="gmail-meta">From: ${from}</div>
-        </div>
-      `;
-    }).join('');
-    
+      const date = headers.find(h => h.name === 'Date')?.value || '';
+      const internalDate = msg.internalDate ? parseInt(msg.internalDate, 10) : null;
+      const sentAt = internalDate ? new Date(internalDate).toLocaleString('en-SG', { hour12: false }) : date;
+      const content = getMessageBody(msg.payload) || msg.snippet || '(No preview available)';
+      const escapedId = msg.id.replace(/'/g, "\\'");
+      const safeSubject = escapeHtml(subject);
+      const safeFrom = escapeHtml(from);
+      const isNewAfterSignIn = newlyAddedIds.has(msg.id);
+      if (isNewAfterSignIn) {
+        sendCmd('EMAIL:LOW');
+      }
+      return {
+        id: msg.id,
+        subject,
+        from,
+        sentAt,
+        content,
+        alertLevel: 'LOW',
+        sentToMicrobit: isNewAfterSignIn,
+        displayHtml: `
+          <div class="gmail-item" onclick="openGmailMessage('${escapedId}')">
+            <div class="gmail-subject">${safeSubject}</div>
+            <div class="gmail-meta">From: ${safeFrom}</div>
+          </div>
+        `
+      };
+    });
+
+    const html = gmailMessages.map(m => m.displayHtml).join('');
     document.getElementById('gmailFeed').innerHTML = html;
   } catch (e) {
     console.error('Gmail fetch error:', e);
@@ -647,7 +671,66 @@ async function fetchGmail() {
 function clearGmailFeed() {
   const feed = document.getElementById('gmailFeed');
   if (!feed) return;
+  gmailMessages = [];
   feed.innerHTML = `<div class="empty"><div class="ei">📭</div><p>Gmail feed cleared</p></div>`;
+}
+
+function openGmailMessage(id) {
+  const message = gmailMessages.find(m => m.id === id);
+  if (!message) return;
+  currentAlertId = null;
+  document.getElementById('mIcon').textContent = '✉️';
+  document.getElementById('mTitle').textContent = message.subject;
+  document.getElementById('mSub').textContent = `${message.from} · ${message.sentAt}`;
+  document.getElementById('mBody').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;font-family:var(--mono);font-size:12px;color:var(--text);">
+      <div><strong>Subject:</strong> ${escapeHtml(message.subject)}</div>
+      <div><strong>From:</strong> ${escapeHtml(message.from)}</div>
+      <div><strong>Sent At:</strong> ${escapeHtml(message.sentAt)}</div>
+      <div><strong>Alert Level:</strong> ${message.alertLevel}</div>
+      <div><strong>Signal sent:</strong> ${message.sentToMicrobit ? 'Yes (EMAIL:LOW)' : 'No'}</div>
+      <div style="padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);white-space:pre-wrap;">${escapeHtml(message.content)}</div>
+    </div>
+  `;
+  document.getElementById('alertModal').classList.add('open');
+}
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getMessageBody(payload) {
+  if (!payload) return '';
+  if (payload.parts && Array.isArray(payload.parts)) {
+    for (const part of payload.parts) {
+      const text = getMessageBody(part);
+      if (text) return text;
+    }
+  }
+  if (payload.mimeType === 'text/plain' && payload.body && payload.body.data) {
+    return decodeGmailBase64(payload.body.data);
+  }
+  if (payload.mimeType === 'text/html' && payload.body && payload.body.data) {
+    return decodeGmailBase64(payload.body.data).replace(/<[^>]+>/g, '');
+  }
+  if (payload.body && payload.body.data) {
+    return decodeGmailBase64(payload.body.data);
+  }
+  return '';
+}
+
+function decodeGmailBase64(data) {
+  try {
+    const decoded = atob(data.replace(/-/g, '+').replace(/_/g, '/'));
+    return decodeURIComponent(decoded.split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+  } catch (e) {
+    return atob(data.replace(/-/g, '+').replace(/_/g, '/'));
+  }
 }
 
 let messages = [];
