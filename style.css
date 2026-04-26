@@ -132,8 +132,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .a-body{flex:1;min-width:0}
 .a-title{font-size:12px;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .a-meta{font-family:var(--mono);font-size:10px;color:var(--muted)}
-.a-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 7px;border-radius:4px;letter-spacing:0.4px;text-transform:uppercase;flex-shrink:0}
-.badge-h{background:var(--red-dim);color:var(--red)}
+.a-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 7px;border-radius:4px;letter-spacing:0.4px;text-transform:uppercase;flex-shrink:0}.alert-item .ack-btn{border:none;background:rgba(255,255,255,0.08);color:var(--text);font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 10px;border-radius:8px;cursor:pointer;transition:background var(--trans);}
+.alert-item .ack-btn:hover{background:rgba(255,255,255,0.14);}.badge-h{background:var(--red-dim);color:var(--red)}
 .badge-m{background:var(--amber-dim);color:var(--amber)}
 .badge-l{background:var(--cyan-dim);color:var(--cyan)}
 /* ============================================
