@@ -6,6 +6,9 @@ let btDevice = null, btTx = null, btNotifyChar = null, btConnected = false;
 let uartBuffer = '';
 let currentAlertId = null;
 let alertCount = 0;
+let gmailUnreadCount = 0;
+let gmailKnownMessageIds = new Set();
+let gmailBaselineCaptured = false;
 
 const NUS_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const NUS_RX_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
@@ -101,10 +104,11 @@ function updateCounts() {
   const unread = document.getElementById('unreadAlerts');
   const crit = document.getElementById('critAlerts');
   const badge = document.getElementById('navBadge');
+  const unreadCount = alerts.filter(a => a.unread).length + gmailUnreadCount;
   if (total) total.textContent = alertCount;
-  if (unread) unread.textContent = alerts.filter(a => a.unread).length;
+  if (unread) unread.textContent = unreadCount;
   if (crit) crit.textContent = btConnected ? 1 : 0;
-  if (badge) badge.style.display = alerts.some(a => a.unread) ? '' : 'none';
+  if (badge) badge.style.display = unreadCount > 0 ? '' : 'none';
 }
 
 // Clear all unread alerts
@@ -562,6 +566,9 @@ function startPolling() {
 document.getElementById("googleSignOutBtn").onclick = () => {
   gmailToken = null;
   gmailEmail = null;
+  gmailUnreadCount = 0;
+  gmailKnownMessageIds.clear();
+  gmailBaselineCaptured = false;
 
   document.getElementById("gmailStatus").textContent = "Disconnected";
   document.getElementById("connectedEmail").textContent = "—";
@@ -571,6 +578,7 @@ document.getElementById("googleSignOutBtn").onclick = () => {
 
   document.getElementById("gmailFeed").innerHTML =
     `<div class="empty"><p>No emails loaded</p></div>`;
+  updateCounts();
 };
 
 // Fetch emails from Gmail API
@@ -587,7 +595,23 @@ async function fetchGmail() {
     );
     const data = await res.json();
     const messages = data.messages || [];
-    
+
+    if (!gmailBaselineCaptured) {
+      messages.forEach(msg => gmailKnownMessageIds.add(msg.id));
+      gmailBaselineCaptured = true;
+      gmailUnreadCount = 0;
+    } else {
+      let newMessages = 0;
+      messages.forEach(msg => {
+        if (!gmailKnownMessageIds.has(msg.id)) {
+          gmailKnownMessageIds.add(msg.id);
+          newMessages += 1;
+        }
+      });
+      gmailUnreadCount += newMessages;
+    }
+    updateCounts();
+
     if (messages.length === 0) {
       document.getElementById('gmailFeed').innerHTML = `<div class="empty"><div class="ei">📭</div><p>No unread emails</p></div>`;
       return;
