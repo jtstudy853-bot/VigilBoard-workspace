@@ -44,6 +44,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .nav-item svg{width:18px;height:18px;flex-shrink:0}
 .nav-label{font-size:13px;font-weight:600;overflow:hidden;transition:opacity var(--trans),max-width var(--trans);max-width:150px}
 .sidebar.collapsed .nav-label{opacity:0;max-width:0}
+.sidebar.collapsed .nav-item{justify-content:center;padding-left:0;padding-right:0}
+.sidebar.collapsed .nav-item.active{justify-content:center}
 .nav-badge{position:absolute;top:7px;right:7px;width:7px;height:7px;background:var(--red);border-radius:50%;border:2px solid var(--surface);animation:badgePulse 2s ease infinite}
 
 /* ============================================
@@ -254,6 +256,13 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   background: var(--surface2);
   border: 1px solid var(--border);
   margin-bottom: 8px;
+  cursor: pointer;
+  transition: background var(--trans), border-color var(--trans);
+}
+
+.gmail-item:hover {
+  background: var(--surface3);
+  border-color: var(--border2);
 }
 
 .gmail-subject {
