@@ -205,7 +205,10 @@
           <div class="card">
             <div class="card-hd">
               <div class="card-title">Live Gmail Feed</div>
-              <button class="card-action" onclick="fetchGmail()">Refresh</button>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <button class="card-action" onclick="fetchGmail()">Refresh</button>
+                <button class="card-action" onclick="clearGmailFeed()">Clear</button>
+              </div>
             </div>
       
             <div id="gmailFeed" class="alert-list">
